@@ -1,0 +1,29 @@
+package com.dba.poc.poc_dba2.repository;
+
+import com.dba.poc.poc_dba2.entity.User;
+import com.dba.poc.poc_dba2.util.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Integer> {
+    User findByEmail(String email);
+
+    @Query("SELECT u.role FROM User u WHERE u.email = :email")
+    Role findRoleByEmail(String email);
+
+    @Query("SELECT u FROM User u WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    List<User> findSpecificUser(String searchText);
+
+    @Query("SELECT u FROM User u WHERE u.userId = :userId")
+    User getById(Integer userId);
+	@Query("SELECT u.loginType FROM User u WHERE u.email = :email")
+    String findLoginType(String email);
+
+    @Query("SELECT u.avatar.avatarSvg FROM User u WHERE u.email = :bookedByEmail")
+    String findAvatarByEmail(String bookedByEmail);
+}

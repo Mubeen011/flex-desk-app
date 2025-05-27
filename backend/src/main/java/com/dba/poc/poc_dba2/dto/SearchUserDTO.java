@@ -1,0 +1,17 @@
+package com.dba.poc.poc_dba2.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Data
+@Slf4j
+@AllArgsConstructor
+public class SearchUserDTO {
+    private int userId;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String department;
+}

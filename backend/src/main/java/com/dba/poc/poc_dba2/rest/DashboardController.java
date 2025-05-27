@@ -1,0 +1,111 @@
+package com.dba.poc.poc_dba2.rest;
+
+
+
+import com.dba.poc.poc_dba2.dto.*;
+import com.dba.poc.poc_dba2.repository.DashboardRepository;
+import com.dba.poc.poc_dba2.service.DashboardService;
+import com.dba.poc.poc_dba2.util.Response;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.sql.In;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.sql.Date;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/flexdesk")
+@CrossOrigin(origins = "*")
+public class DashboardController {
+
+    @Autowired
+    private DashboardService dashboardService;
+
+    @RequestMapping("/getUsersSchedule")
+    public List<WeeklyUserLocationDTO> getUsersSchedule(
+            @RequestParam("startDate") Date startDate,
+            @RequestParam("endDate") Date endDate,
+            @RequestParam("loggedInUserEmail") String loggedInUserEmail,
+            @RequestParam("searchText") String searchText) {
+        return dashboardService.getUsersWeeklyLocationsService(startDate, endDate, loggedInUserEmail,searchText);
+    }
+
+    @PostMapping("/bookSchedule")
+    public ResponseEntity<Response> bookSchedule(@RequestBody BookScheduleDTO bookScheduleDTO){
+//        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
+//        LocalDate parsedDate = LocalDate.parse(bookScheduleDTO.getDate(), inputFormatter);
+//        bookScheduleDTO.setDate(parsedDate.toString()); // Set it as yyyy-MM-dd
+
+//        dashboardService.bookDeskResponseService(bookScheduleDTO);
+//        Response response = new Response("200", "Schedule booked successfully!");
+//        return ResponseEntity.ok(response);
+            return dashboardService.bookScheduleResponseService(bookScheduleDTO);
+    }
+
+    @PostMapping("/bookMultipleSchedule")
+    public ResponseEntity<Response> bookMultipleSchedule(@RequestBody BookMultipleScheduleDTO bookMultipleScheduleDTO){
+
+        return dashboardService.bookMultipleScheduleResponseService(bookMultipleScheduleDTO);
+//        Response response = new Response("200", "Schedule booked successfully!");
+//        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/editSchedule")
+    public ResponseEntity<Response> editSchedule(@RequestBody BookScheduleDTO bookScheduleDTO){
+        return dashboardService.editScheduleResponseService(bookScheduleDTO);
+
+    }
+
+    @RequestMapping("/getCheckIn")
+    public int getCheckIn(@RequestParam("email")String email){
+        return dashboardService.getCheckIn(email);
+    }
+
+    @GetMapping("/getActiveBookingsInfo")
+    public List<ActiveBookingCardDTO> getActiveBookingsInfo(@RequestParam("email") String email,@RequestParam("date")Date date) {
+        return dashboardService.getActiveBookingDetails(email,date);
+    }
+
+    //dd
+    @GetMapping("/getEditBookingsInfo")
+    public ActiveBookingCard getEditBookingsInfo(@RequestParam("bookingId") int bookingId) {
+        return dashboardService.getEditBookingsInfo(bookingId);
+    }
+    @GetMapping("/getPastBookingsInfo")
+    public List<ActiveBookingCardDTO> getPastBookingsInfo(@RequestParam("email") String email,@RequestParam("startDate") Date startDate,@RequestParam("endDate") Date endDate) {
+        return dashboardService.getPastBookingDetails(email,startDate,endDate);
+    }
+
+    @PostMapping("/editBooking")
+    public ResponseEntity<String> editBooking(@RequestParam("bookingId") Integer bookingId, @RequestParam("bookingDate")Date date, @RequestParam("startTime") Time startTime, @RequestParam("endTime") Time endTime) {
+        dashboardService.editBooking(bookingId, date, startTime, endTime);
+        return ResponseEntity.ok("Booking successfully edited");
+    }
+    @PostMapping("/cancelBooking")
+    public ResponseEntity<String> cancelBooking(@RequestParam("bookingId") Integer bookingId) {
+        dashboardService.cancelBooking(bookingId);
+        return ResponseEntity.ok("Booking successfully canceled");
+
+    }
+
+    @PostMapping("/cancelSchedule")
+    public ResponseEntity<String> cancelSchedule(@RequestParam("scheduleId")Integer scheduleId){
+        dashboardService.cancelSchedule(scheduleId);
+        return ResponseEntity.ok("Booking successfully canceled");
+
+    }
+//    @RequestMapping("/getDayBookings")
+//    public List<ActiveBookingCard> getDayBookings(@RequestParam("email") String email,@RequestParam("date") Date date){
+//        return dashboardService.getDayBookings(email,date);
+//    }
+
+
+}

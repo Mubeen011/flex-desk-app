@@ -1,0 +1,111 @@
+package com.dba.poc.poc_dba2.repository;
+
+
+import com.dba.poc.poc_dba2.dto.ActiveBookingCard;
+import com.dba.poc.poc_dba2.dto.ActiveBookingCardDTO;
+import com.dba.poc.poc_dba2.dto.DeskDetailsDTO;
+import com.dba.poc.poc_dba2.entity.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.List;
+
+@Repository
+public interface DashboardRepository extends JpaRepository<WorkSchedule, Integer> {
+
+
+//    @Query("SELECT u.firstName, u.lastName, ws.workDate, l.locationName, b.buildingName, f.description, ws.startTime, ws.endTime,u.email FROM WorkSchedule ws JOIN ws.user u JOIN ws.location l JOIN ws.building b JOIN ws.floor f WHERE ws.workDate BETWEEN :startDate AND :endDate ORDER BY CASE WHEN u.email = :email THEN 0 ELSE 1 END, u.firstName, u.lastName")
+//    List<Object[]> findUserWeeklyLocationsWithDetails(@Param("startDate") Date startDate,
+//                                                      @Param("endDate") Date endDate,
+//                                                      @Param("email") String email);
+
+    //    @Query("SELECT u.firstName, u.lastName, ws.workDate, l.locationName, b.buildingName, f.description, ws.startTime, ws.endTime,u.email,ws.isCheckedIn FROM WorkSchedule ws JOIN ws.user u JOIN ws.location l JOIN ws.building b JOIN ws.floor f WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :searchText, '%')) AND ws.workDate BETWEEN :startDate AND :endDate ORDER BY CASE WHEN u.email = :email THEN 0 ELSE 1 END, u.firstName, u.lastName")
+//    List<Object[]> findUserWeeklyLocationsWithDetails(@Param("startDate") Date startDate,
+//                                                      @Param("endDate") Date endDate,
+//                                                      @Param("email") String email,
+//                                                        @Param("searchText")String  searchText);
+//    @Query("SELECT u.firstName, u.lastName, ws.workDate, l.locationName, b.buildingName, f.description, ws.startTime, ws.endTime, u.email, ws.isCheckedIn, u.department, ws.scheduleId " +
+//            "FROM User u " +
+//            "LEFT JOIN WorkSchedule ws ON ws.user.userId = u.userId AND ws.workDate BETWEEN :startDate AND :endDate " +
+//            "LEFT JOIN Location l ON ws.location.locationId = l.locationId " +
+//            "LEFT JOIN Building b ON ws.building.buildingId = b.buildingId " +
+//            "LEFT JOIN Floor f ON ws.floor.floorId = f.floorId " +
+//            "WHERE LOWER(u.firstName) LIKE LOWER(CONCAT('%', :searchText, '%')) "+
+//            "ORDER BY CASE WHEN u.email = :email THEN 0 ELSE 1 END, u.firstName, u.lastName")
+    @Query("SELECT u.firstName, u.lastName, ws.workDate, l.locationName, b.buildingName, f.description, ws.startTime, ws.endTime, u.email, ws.isCheckedIn, u.department, ws.scheduleId,SELECT COUNT(bk.bookingId) FROM Booking bk WHERE bk.bookingDate = ws.workDate AND bk.user.email = u.email FROM User u LEFT JOIN WorkSchedule ws ON ws.user.userId = u.userId AND ws.workDate BETWEEN :startDate AND :endDate LEFT JOIN Location l ON ws.location.locationId = l.locationId LEFT JOIN Building b ON ws.building.buildingId = b.buildingId LEFT JOIN Floor f ON ws.floor.floorId = f.floorId WHERE u.email=:email")
+    List<Object[]> findUserWeeklyLocationsWithDetails(@Param("startDate") Date startDate,
+                                                      @Param("endDate") Date endDate,
+                                                      @Param("email") String email);
+
+
+    @Modifying
+    @Query("UPDATE WorkSchedule ws SET ws.building= :building, ws.location= :location,ws.floor= :floor WHERE ws.user.email=:email AND ws.workDate= :workDate")
+    void editSchedule(String email, Building building, Location location, Floor floor, Date workDate);
+
+
+    @Modifying
+    @Query("UPDATE WorkSchedule ws SET ws.isCheckedIn= CASE WHEN ws.isCheckedIn = true THEN false ELSE true END WHERE ws.user.email= :email and ws.workDate=:localDate")
+    int checkIn(String email, LocalDate localDate);
+
+    @Query("SELECT new com.dba.poc.poc_dba2.dto.ActiveBookingCardDTO(b.bookingId,l.locationName,bl.buildingName,f.description,f.floorId,d.deskNumber,b.bookingDate,b.startTime,b.endTime,b.status) FROM Booking b JOIN User u ON b.user.userId=u.userId JOIN Desk d ON b.desk.deskId=d.deskId JOIN Floor f ON d.floor.floorId=f.floorId JOIN Building bl ON f.building.buildingId=bl.buildingId JOIN Location l ON bl.location.locationId=l.locationId WHERE b.user.email=:email AND b.bookingDate= :date ORDER BY b.bookingDate ASC")
+    List<ActiveBookingCardDTO> getActiveBookingDetails(String email,Date date);
+
+    @Query("SELECT new com.dba.poc.poc_dba2.dto.ActiveBookingCardDTO(b.bookingId,l.locationName,bl.buildingName,f.description,f.floorId,d.deskNumber,b.bookingDate,b.startTime,b.endTime,b.status) FROM BookingHistory b JOIN User u ON b.user.userId=u.userId JOIN Desk d ON b.desk.deskId=d.deskId JOIN Floor f ON d.floor.floorId=f.floorId JOIN Building bl ON f.building.buildingId=bl.buildingId JOIN Location l ON bl.location.locationId=l.locationId WHERE b.user.email=:email AND (b.bookingDate>= :startDate AND b.bookingDate<= :endDate) ORDER BY b.bookingDate DESC")
+    List<ActiveBookingCardDTO> getPastBookingDetails(String email,Date startDate,Date endDate);
+
+    @Modifying
+    @Query("UPDATE Booking b SET b.bookingDate=:date, b.startTime=:startTime, b.endTime=:endTime WHERE b.bookingId=:bookingId")
+    void editBooking(Integer bookingId, Date date, Time startTime, Time endTime);
+
+    @Query("SELECT COUNT(*) FROM WorkSchedule ws WHERE ws.user.email=:email AND ws.workDate=:date")
+    int findByEmailWithDate(String email, Date date);
+
+
+    @Modifying
+    @Query("DELETE FROM Booking b WHERE b.bookingId=:bookingId")
+    void cancelBooking(Integer bookingId);
+
+    @Modifying
+    @Query("INSERT INTO BookingHistory(bookingId, user, floor, desk, building, bookingDate, startTime, endTime, status) SELECT b.bookingId,b.user,b.floor,b.desk,b.building,b.bookingDate,b.startTime,b.endTime,true FROM Booking b WHERE b.bookingId=:bookingId")
+    void moveCanceledBookingsToHistory(Integer bookingId);
+
+    @Modifying
+    @Query("DELETE FROM WorkSchedule ws WHERE ws.scheduleId=:scheduleId")
+    void cancelSchedule(Integer scheduleId);
+
+    @Modifying
+    @Query("INSERT INTO BookingHistory (bookingId, user, floor, desk, building, bookingDate, startTime, endTime, status) SELECT b.bookingId,b.user,b.floor,b.desk,b.building,b.bookingDate,b.startTime,b.endTime,false FROM Booking b WHERE CONCAT(b.bookingDate, ' ', b.endTime) <= :currentTimestamp")
+    int movePastBookingsToHistory(String currentTimestamp);
+
+    @Modifying
+    @Query("DELETE FROM Booking b WHERE CONCAT(b.bookingDate, ' ', b.endTime) <= :currentTimestamp")
+    int deletePastBookings(String currentTimestamp);
+
+    WorkSchedule findByUserAndWorkDate(User user, Date bookingDate);
+
+    @Query("SELECT new com.dba.poc.poc_dba2.dto.ActiveBookingCardDTO(b.bookingId,l.locationName,bl.buildingName,f.description,f.floorId,d.deskNumber,b.bookingDate,b.startTime,b.endTime,b.status) FROM Booking b JOIN User u ON b.user.userId=u.userId JOIN Desk d ON b.desk.deskId=d.deskId JOIN Floor f ON d.floor.floorId=f.floorId JOIN Building bl ON f.building.buildingId=bl.buildingId JOIN Location l ON bl.location.locationId=l.locationId WHERE b.user.email=:email AND b.bookingDate= :date ORDER BY b.bookingDate ASC")
+    List<ActiveBookingCardDTO> findByUserAndBookDate(String email, Date date);
+
+    @Query("SELECT b.bookingId from Booking b JOIN User u ON b.user.userId=u.userId WHERE u.email=:email AND b.bookingDate=:date")
+    List<Integer> findRespectiveBookings(String email, Date date);
+
+    @Query("SELECT b.bookingId FROM Booking b WHERE b.workSchedule.scheduleId=:scheduleId")
+    List<Integer> findtoBeCancelledBookings(Integer scheduleId);
+
+    @Query("SELECT COUNT(*) FROM WorkSchedule ws WHERE ws.workDate<=:date")
+    int getTotalCount(LocalDate date);
+
+    @Query("SELECT COUNT(*) FROM WorkSchedule ws WHERE ws.workDate<=:date AND ws.isCheckedIn=true")
+    int getCheckInCount(LocalDate date);
+
+
+    @Query("SELECT new com.dba.poc.poc_dba2.dto.ActiveBookingCard(d.deskNumber,f.description,bl.buildingName,l.locationName, f.floorId,d.status, d.capacity, d.deskType, new com.dba.poc.poc_dba2.dto.BookingDTO( b.bookingId, u.email, u.firstName, u.lastName, b.bookingDate, b.startTime, b.endTime)) FROM Booking b JOIN User u ON b.user.userId=u.userId JOIN Desk d ON b.desk.deskId=d.deskId JOIN Floor f ON d.floor.floorId=f.floorId JOIN Building bl ON f.building.buildingId=bl.buildingId JOIN Location l ON bl.location.locationId=l.locationId WHERE b.bookingId=:bookingId")
+    ActiveBookingCard getEditBookingsInfo(int bookingId);
+}

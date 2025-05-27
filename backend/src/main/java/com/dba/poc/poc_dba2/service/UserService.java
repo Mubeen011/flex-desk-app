@@ -1,0 +1,49 @@
+package com.dba.poc.poc_dba2.service;
+
+import com.dba.poc.poc_dba2.dto.UserDTO;
+import com.dba.poc.poc_dba2.entity.User;
+import com.dba.poc.poc_dba2.repository.UserRepository;
+import com.dba.poc.poc_dba2.util.Response;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+
+@Service
+@Slf4j
+public class UserService {
+
+    @Autowired
+    UserRepository userRepository;
+
+    public ResponseEntity<Response> addUser(@RequestBody UserDTO userDTO){
+        Response response = new Response();
+        User user = new User();
+        user.setFirstName(userDTO.getFirstName());
+        user.setLastName(userDTO.getLastName());
+        user.setEmail(userDTO.getEmail());
+        user.setPwd(userDTO.getPwd());
+        user.setDepartment(userDTO.getDepartment());
+        userRepository.save(user);
+
+        User addedUser = userRepository.findByEmail(userDTO.getEmail());
+        if(addedUser == null){
+            response.setStatusMsg("User couldn't be added");
+            response.setStatusCode("400");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        response.setStatusMsg("User added successfully!");
+        response.setStatusCode("200");
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+
+
+    }
+
+    public String toggleLoginType(String email) {
+        String loginType = userRepository.findLoginType(email);
+        return email;
+    }
+}

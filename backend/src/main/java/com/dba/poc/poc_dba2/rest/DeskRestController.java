@@ -1,0 +1,91 @@
+package com.dba.poc.poc_dba2.rest;
+
+import com.dba.poc.poc_dba2.dto.*;
+import com.dba.poc.poc_dba2.entity.Desk;
+import com.dba.poc.poc_dba2.entity.GroupInfo;
+import com.dba.poc.poc_dba2.service.DeskService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import java.sql.Date;
+import java.sql.Time;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@Slf4j
+@RequestMapping(path = {"/flexdesk"}, produces = {MediaType.APPLICATION_JSON_VALUE})
+@CrossOrigin(origins = "*")
+public class DeskRestController {
+
+    @Autowired
+    private DeskService deskService;
+
+    @GetMapping("/getFilteredDesksInfo")
+    public List<DesksDTO> getFilteredDesks(
+            @RequestParam String locationName,
+            @RequestParam String buildingName,
+            @RequestParam String description,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String date,
+            @RequestParam String startTime,
+            @RequestParam String endTime) {
+        Date sqlDate = Date.valueOf(date);
+        Time start = Time.valueOf(startTime);
+        Time end = Time.valueOf(endTime);
+        Integer floorId = deskService.getFloorIdService(locationName, buildingName, description);
+        List<DesksDTO> desks = deskService.getFilteredDesksService(floorId, sqlDate, start, end);
+        //log.info(desks.toString());
+        return desks;
+    }
+
+    @GetMapping("/getFilterData")
+    public Map<String, Map<String, List<String>>> getFilterData() {
+        Map<String, Map<String, List<String>>> filterData = deskService.getFilterData();
+        return filterData;
+    }
+
+    @GetMapping("/getNoOfDesksByStatus")
+    public List<Integer> getNoOfDesksByStatus(@RequestParam("email") String email, @RequestParam("status") String status, @RequestParam int locationId, @RequestParam int buildingId, @RequestParam int floorId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String date, @RequestParam("startTime") String startTime, @RequestParam("endTime") String endTime) {
+        Date sqlDate = Date.valueOf(date);
+        Time start = Time.valueOf(startTime);
+        Time end = Time.valueOf(endTime);
+        Desk.Status deskStatus = Desk.Status.valueOf(status.toLowerCase());
+        List<DesksDTO> filteredDesks = deskService.getFilteredDesksService(floorId, sqlDate, start, end);
+        List<Integer> countList = deskService.countByStatusService(filteredDesks, deskStatus, email);
+        return countList;
+    }
+
+    @GetMapping("/getUserBookedDesksCount")
+    public Integer getUserBookedCount(@RequestParam("email") String email, @RequestParam int locationId, @RequestParam int buildingId, @RequestParam int floorId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String date, @RequestParam("startTime") String startTime, @RequestParam("endTime") String endTime) {
+        Date sqlDate = Date.valueOf(date);
+        Time start = Time.valueOf(startTime);
+        Time end = Time.valueOf(endTime);
+        return deskService.userBookedDesksCountService(email, locationId, buildingId, floorId, sqlDate, start, end);
+    }
+
+    @GetMapping("/getInOfficeDetails")
+    List<InOfficeDetailsDTO> getInOfficeDetails(@RequestParam String locationName,
+                                                @RequestParam String buildingName,
+                                                @RequestParam String description,
+                                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String date, @RequestParam("startTime") String startTime, @RequestParam("endTime") String endTime) {
+        Date sqlDate = Date.valueOf(date);
+        Time start = Time.valueOf(startTime);
+        Time end = Time.valueOf(endTime);
+        Integer floorId = deskService.getFloorIdService(locationName, buildingName, description);
+        return deskService.getInOfficeDetailsService(floorId, sqlDate, start, end);
+    }
+
+    @RequestMapping("/deskTimeSlots")
+    public List<TimeSlotDTO> deskTimeSlots(@RequestBody DesksDTO desk, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) String date) {
+        Date sqlDate = Date.valueOf(date);
+        String reqDeskNumber = desk.getDeskNumber();
+        desk.setDeskNumber(Integer.toString(Integer.parseInt(reqDeskNumber) + (desk.getFloorId() * 100)));
+        //  log.info(desk.getDeskNumber());
+        return deskService.deskTimeSlotsService(desk, sqlDate);
+    }
+
+
+}

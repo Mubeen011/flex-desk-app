@@ -1,0 +1,17 @@
+image: atlassian/default-image:3
+
+pipelines:
+  branches:
+    master:
+      - step:
+          name: "Run Frontend Pipeline from master branch"
+          script:
+            - echo "Running frontend pipeline..."
+            - bash scripts/frontend-pipeline.sh  # Execute the frontend shell script
+
+    development:
+      - step:
+          name: "Run Frontend Pipeline from development branch"
+          script:
+            - echo "Running frontend pipeline..."
+            - bash scripts/frontend-pipeline.sh  # Execute the frontend shell script

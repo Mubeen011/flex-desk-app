@@ -1,0 +1,59 @@
+package com.dba.poc.poc_dba2.dto;
+
+import com.dba.poc.poc_dba2.entity.Desk;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.sql.Date;
+import java.sql.Time;
+import java.util.List;
+
+@Data
+@Slf4j
+//@AllArgsConstructor
+@NoArgsConstructor
+public class DeskDetailsDTO {
+    private String deskNumber;
+    private int floorId;
+    private Desk.Status status;
+    private int capacity;
+    private String deskType;
+//    private List<DeskBookingDetailsDTO> bookings;
+    private Integer bookingId;
+    private String bookedByEmail;
+    private String bookedByFirstName;
+    private String bookedByLastName;
+    private String bookingType;
+    private Date date;
+    private Time startTime;
+    private Time endTime;
+
+    public DeskDetailsDTO(String deskNumber, int floorId, Desk.Status status, int capacity, String deskType) {
+        this.deskNumber = Integer.toString(Integer.parseInt(deskNumber) - (floorId * 100));
+        this.floorId = floorId;
+        this.status = status;
+        this.capacity = capacity;
+        this.deskType = deskType;
+    }
+
+    public DeskDetailsDTO(String deskNumber, int floorId, Desk.Status status, int capacity, String deskType, Integer bookingId, String bookedByEmail, String bookedByFirstName, String bookedByLastName, String bookingType, Date date, Time startTime, Time endTime) {
+        this.deskNumber = Integer.toString(Integer.parseInt(deskNumber) - (floorId * 100));
+        this.floorId = floorId;
+        this.status = status;
+        this.capacity = capacity;
+        this.deskType = deskType;
+        this.bookingId = bookingId;
+        this.bookedByEmail = bookedByEmail;
+        this.bookedByFirstName = bookedByFirstName;
+        this.bookedByLastName = bookedByLastName;
+        this.deskType = deskType;
+        this.date = date;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+
+
+}

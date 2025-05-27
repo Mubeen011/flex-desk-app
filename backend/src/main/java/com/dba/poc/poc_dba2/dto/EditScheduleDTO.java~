@@ -1,0 +1,4 @@
+package com.dba.poc.poc_dba2.dto;
+
+public class EditScheduleDTO {
+}

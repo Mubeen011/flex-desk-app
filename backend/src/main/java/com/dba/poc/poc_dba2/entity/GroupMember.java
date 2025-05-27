@@ -1,0 +1,37 @@
+package com.dba.poc.poc_dba2.entity;
+
+import com.dba.poc.poc_dba2.util.GroupMemberId;
+import com.dba.poc.poc_dba2.util.Role;
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+
+@Data
+@Entity
+@Table(name = "group_member")
+public class GroupMember {
+    @EmbeddedId
+    private GroupMemberId id;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @MapsId("groupId")
+    @JoinColumn(name = "group_id")
+    private GroupInfo groupInfo;
+
+    @ManyToOne
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "join_id")
+    private Date joinDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", updatable = false)
+    private Role role;
+
+
+}
+

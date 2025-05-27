@@ -1,0 +1,19 @@
+package com.dba.poc.poc_dba2.dto;
+
+import com.dba.poc.poc_dba2.util.Role;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.sql.Date;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class GroupMemberDTO {
+    private int userId;
+    private String firstName;
+    private String lastName;
+    private Date joinDate;
+    private Role role;
+}

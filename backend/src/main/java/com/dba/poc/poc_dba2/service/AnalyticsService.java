@@ -1,0 +1,94 @@
+package com.dba.poc.poc_dba2.service;
+
+import com.dba.poc.poc_dba2.dto.TopBuildingsDTO;
+import com.dba.poc.poc_dba2.entity.BookingHistory;
+import com.dba.poc.poc_dba2.repository.BookingRepository;
+import com.dba.poc.poc_dba2.repository.DashboardRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.sql.Date;
+import java.time.LocalDate;
+import java.util.*;
+
+@Service
+@Slf4j
+public class AnalyticsService {
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private DashboardRepository dashboardRepository;
+
+    public Map<String, int[]> getMonthlyBookingsPerBuilding() {
+        List<Object[]> results = bookingRepository.getBookingsPerMonthPerBuilding();
+
+        Map<String, int[]> buildingBookingsMap = new HashMap<>();
+
+        for (Object[] result : results){
+            String building = (String) result[0];
+            int month = (int) result[1] - 1;
+            int totalBookings = ((Number) result[2]).intValue();
+
+            buildingBookingsMap.putIfAbsent(building, new int[12]);
+            buildingBookingsMap.get(building)[month]=totalBookings;
+        };
+
+        return buildingBookingsMap;
+    }
+
+    public List<Integer> getBookedCancelledPercentage() {
+        int bookedCount=bookingRepository.getBookingCount();
+        if (bookedCount == 0) {
+            return Arrays.asList(0, 0);
+        }
+        int cancelledCount=bookingRepository.getCancelledCount();
+        double cancelledPer = ((double) cancelledCount / bookedCount) * 100;
+        double bookedPer = 100 - cancelledPer;
+
+        return Arrays.asList((int)bookedPer,(int)cancelledPer);
+    }
+
+    public List<Integer> getCheckInPercentage() {
+        LocalDate today=LocalDate.now();
+        int totalCount=dashboardRepository.getTotalCount(today);
+        int checkInCount=dashboardRepository.getCheckInCount(today);
+
+        double checkInPer=((double) checkInCount/totalCount)*100;
+        double notCheckInper=100-checkInPer;
+
+        return Arrays.asList((int)checkInPer,(int)notCheckInper);
+    }
+
+    public Map<String, int[]> getHeatMapData() {
+        List<Object[]> results = bookingRepository.getHourlyWeekData();
+        Map<String, int[]> heatmap = new LinkedHashMap<>();
+        for (String day : List.of("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")) {
+            heatmap.put(day, new int[24]);
+        }
+        Map<Integer, String> dayMapping = Map.of(
+                1, "Sun", 2, "Mon", 3, "Tue", 4, "Wed", 5, "Thu", 6, "Fri", 7, "Sat"
+        );
+
+        for (Object[] row : results) {
+            int dayOfWeek = (Integer) row[0];
+            int hour = (Integer) row[1];
+            int totalBookings = ((Number) row[2]).intValue();
+            int totalDesks = ((Number) row[3]).intValue();
+            log.info(String.valueOf(totalBookings));
+            log.info(String.valueOf(totalDesks));
+            double utilizationPercentage = ((double) totalBookings / totalDesks) * 100;
+            String dayName = dayMapping.get(dayOfWeek);
+
+            heatmap.get(dayName)[hour] = (int)utilizationPercentage;
+        }
+
+        return heatmap;
+    }
+
+    public List<TopBuildingsDTO> getTopBuildings() {
+        return bookingRepository.getTopBuildings();
+    }
+}
